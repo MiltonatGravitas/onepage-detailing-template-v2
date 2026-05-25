@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading…</title>
+  <meta name="description" content="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ════════════════════════════════════════════════════════
+       DESIGN TOKENS
+       Change colors, fonts, and spacing here. Nothing below
+       this block needs to be touched to restyle the site.
+       ════════════════════════════════════════════════════════ */
+    :root {
+      /* ── Palette ──────────────────────────────────────── */
+      --bg:          #080808;   /* main page background      */
+      --bg2:         #101010;   /* alternate section bg      */
+      --bg3:         #181818;   /* card / element bg         */
+      --accent:      #cc0000;   /* primary brand color       */
+      --accent2:     #ff2020;   /* lighter accent / hover    */
+      --accent-dim:  rgba(204,0,0,.12);
+      --white:       #ffffff;
+      --gray:        #999999;
+      --gray2:       #555555;
+      --border:      rgba(255,255,255,.07);
+
+      /* ── Typography ───────────────────────────────────── */
+      --font-head:   'Montserrat', sans-serif;
+      --font-body:   'Inter', sans-serif;
+
+      /* ── Layout ───────────────────────────────────────── */
+      --radius:      4px;
+      --section-v:   100px;
+      --section-h:   6%;
+    }
+
+    /* ─── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { background:var(--bg); color:var(--white); font-family:var(--font-body); overflow-x:hidden; }
+
+    /* ─── Utility ────────────────────────────────────────── */
+    .tag { display:inline-block; color:var(--accent2); font-size:.7rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; margin-bottom:14px; }
+    .section-title { font-family:var(--font-head); font-size:clamp(1.9rem,3.5vw,2.8rem); font-weight:900; line-height:1.1; letter-spacing:-.02em; margin-bottom:18px; }
+    .lead { font-size:1rem; color:var(--gray); line-height:1.8; font-weight:300; max-width:500px; }
+    .fade-up { opacity:0; transform:translateY(28px); transition:opacity .65s ease,transform .65s ease; }
+    .fade-up.vis { opacity:1; transform:translateY(0); }
+
+    /* ─── Nav ────────────────────────────────────────────── */
+    #nav { position:fixed; inset:0 0 auto 0; z-index:999; display:flex; justify-content:space-between; align-items:center; padding:22px var(--section-h); transition:background .35s,padding .35s,border-color .35s; border-bottom:1px solid transparent; }
+    #nav.stuck { background:rgba(8,8,8,.95); backdrop-filter:blur(14px); padding:14px var(--section-h); border-color:var(--border); }
+    .nav-logo { font-family:var(--font-head); font-weight:900; font-size:1.22rem; color:var(--white); text-decoration:none; letter-spacing:.03em; white-space:nowrap; }
+    .nav-logo em { color:var(--accent); font-style:normal; }
+    .nav-links { display:flex; list-style:none; gap:32px; align-items:center; }
+    .nav-links a { color:var(--gray); text-decoration:none; font-size:.8rem; font-weight:500; letter-spacing:.09em; text-transform:uppercase; transition:color .2s; }
+    .nav-links a:hover { color:var(--white); }
+    .nav-call { background:var(--accent)!important; color:var(--white)!important; padding:9px 20px; border-radius:var(--radius); font-size:.8rem!important; }
+    .nav-call:hover { background:var(--accent2)!important; }
+    .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:6px; }
+    .hamburger span { display:block; width:24px; height:2px; background:var(--white); border-radius:2px; transition:all .3s; }
+    .mobile-menu { display:none; position:fixed; inset:0; background:rgba(8,8,8,.97); z-index:998; flex-direction:column; align-items:center; justify-content:center; gap:36px; }
+    .mobile-menu.open { display:flex; }
+    .mobile-menu a { color:var(--white); text-decoration:none; font-family:var(--font-head); font-size:1.8rem; font-weight:800; transition:color .2s; }
+    .mobile-menu a:hover { color:var(--accent); }
+
+    /* ─── Hero ───────────────────────────────────────────── */
+    #hero { position:relative; height:100vh; min-height:680px; display:flex; align-items:center; padding:0 var(--section-h); overflow:hidden; }
+    .hero-bg { position:absolute; inset:0; background-size:cover; background-position:center right; background-repeat:no-repeat; z-index:0; }
+    .hero-bg-dim { position:absolute; inset:0; background:rgba(0,0,0,.35); z-index:1; }
+    .hero-veil { position:absolute; inset:0; background:linear-gradient(to right,rgba(8,8,8,.95) 0%,rgba(8,8,8,.82) 28%,rgba(8,8,8,.5) 52%,rgba(8,8,8,.15) 72%,transparent 88%); z-index:2; }
+    #heroCanvas { position:absolute; inset:0; width:100%; height:100%; z-index:3; pointer-events:none; }
+    .hero-glow-r { position:absolute; width:500px; height:500px; background:radial-gradient(circle,rgba(204,0,0,.2) 0%,transparent 70%); right:-40px; top:50%; transform:translateY(-50%); z-index:3; pointer-events:none; }
+    .hero-content { position:relative; z-index:5; max-width:620px; }
+    .hero-badge { display:inline-flex; align-items:center; gap:9px; background:rgba(204,0,0,.1); border:1px solid rgba(204,0,0,.3); color:var(--accent2); padding:6px 14px; border-radius:2px; font-size:.68rem; font-weight:700; letter-spacing:.18em; text-transform:uppercase; margin-bottom:26px; }
+    .hero-badge::before { content:''; width:7px; height:7px; background:var(--accent2); border-radius:50%; animation:blink 2.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)} }
+    .hero-title { font-family:var(--font-head); font-size:clamp(2.6rem,5.5vw,4.8rem); font-weight:900; line-height:1.03; letter-spacing:-.025em; margin-bottom:22px; }
+    .hero-title em { color:var(--accent); font-style:normal; }
+    .hero-sub { font-size:1.05rem; color:var(--gray); line-height:1.75; font-weight:300; margin-bottom:38px; max-width:460px; }
+    .hero-btns { display:flex; gap:14px; flex-wrap:wrap; }
+    .btn-red { display:inline-flex; align-items:center; gap:10px; background:var(--accent); color:var(--white); padding:14px 30px; border-radius:var(--radius); font-weight:700; font-size:.88rem; text-decoration:none; letter-spacing:.04em; border:1px solid var(--accent); transition:all .25s; }
+    .btn-red:hover { background:var(--accent2); border-color:var(--accent2); transform:translateY(-2px); box-shadow:0 12px 32px rgba(204,0,0,.4); }
+    .btn-ghost { display:inline-flex; align-items:center; gap:10px; background:transparent; color:var(--white); padding:14px 30px; border-radius:var(--radius); font-weight:600; font-size:.88rem; text-decoration:none; letter-spacing:.04em; border:1px solid rgba(255,255,255,.2); transition:all .25s; }
+    .btn-ghost:hover { border-color:rgba(255,255,255,.5); background:rgba(255,255,255,.05); }
+    .scroll-hint { position:absolute; bottom:36px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--gray2); font-size:.65rem; letter-spacing:.14em; text-transform:uppercase; z-index:5; }
+    .scroll-hint-line { width:1px; height:44px; background:linear-gradient(to bottom,var(--gray2),transparent); animation:lineAnim 2s ease-in-out infinite; }
+    @keyframes lineAnim { 0%{transform:scaleY(0);transform-origin:top}49%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom} }
+
+    /* ─── Stats ──────────────────────────────────────────── */
+    #stats { background:var(--bg3); border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:0 var(--section-h); }
+    .stats-inner { display:grid; grid-template-columns:repeat(4,1fr); }
+    .stat-item { text-align:center; padding:44px 20px; border-right:1px solid var(--border); }
+    .stat-item:last-child { border-right:0; }
+    .stat-num { font-family:var(--font-head); font-size:3rem; font-weight:900; color:var(--accent); line-height:1; margin-bottom:6px; }
+    .stat-label { font-size:.72rem; color:var(--gray); letter-spacing:.12em; text-transform:uppercase; font-weight:500; }
+
+    /* ─── Section shared ─────────────────────────────────── */
+    .section { padding:var(--section-v) var(--section-h); }
+    .section-dark  { background:var(--bg);  }
+    .section-dark2 { background:var(--bg2); }
+    .section-dark3 { background:var(--bg3); }
+
+    /* ─── About ──────────────────────────────────────────── */
+    .about-grid { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
+    .about-visual-wrap { position:relative; }
+    .about-card { width:100%; aspect-ratio:4/3; background:var(--bg3); border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); position:relative; }
+    .about-card-line { position:absolute; top:0; left:0; width:2px; height:100%; background:linear-gradient(to bottom,var(--accent),transparent); z-index:2; }
+    .about-photo { width:100%; height:100%; object-fit:cover; display:block; border-radius:var(--radius); }
+    .about-years-badge { position:absolute; bottom:-22px; right:-22px; width:110px; height:110px; background:var(--accent); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; box-shadow:0 0 50px rgba(204,0,0,.55); border:3px solid var(--bg); z-index:2; }
+    .badge-num { font-family:var(--font-head); font-size:2rem; font-weight:900; line-height:1; }
+    .badge-txt { font-size:.58rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; opacity:.9; }
+    .about-features { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:32px; }
+    .feat { display:flex; align-items:flex-start; gap:12px; padding:16px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); transition:border-color .2s; }
+    .feat:hover { border-color:rgba(204,0,0,.3); }
+    .feat-icon { width:34px; min-width:34px; height:34px; background:var(--accent-dim); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+    .feat-icon svg { width:17px; height:17px; }
+    .feat-name { font-size:.84rem; font-weight:600; line-height:1.35; }
+    .feat-sub { font-size:.73rem; color:var(--gray2); margin-top:2px; }
+
+    /* ─── Services ───────────────────────────────────────── */
+    .svc-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:50px; gap:30px; }
+    .svc-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
+    .svc-card { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); position:relative; overflow:hidden; transition:all .3s; padding:0; }
+    .svc-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent); transform:scaleX(0); transform-origin:left; transition:transform .35s; }
+    .svc-card:hover { border-color:rgba(204,0,0,.35); transform:translateY(-5px); box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 30px rgba(204,0,0,.1); }
+    .svc-card:hover::after { transform:scaleX(1); }
+    .svc-card-photo { height:175px; overflow:hidden; position:relative; }
+    .svc-card-img { width:100%; height:100%; object-fit:cover; transition:transform .6s ease; display:block; }
+    .svc-card:hover .svc-card-img { transform:scale(1.08); }
+    .svc-card-photo-grad { position:absolute; inset:0; background:linear-gradient(to bottom,transparent 20%,rgba(24,24,24,.97) 100%); }
+    .svc-num { position:absolute; top:12px; right:16px; font-family:var(--font-head); font-size:2.8rem; font-weight:900; color:rgba(255,255,255,.12); line-height:1; user-select:none; }
+    .svc-card-body { padding:20px 26px 28px; }
+    .svc-icon { width:46px; height:46px; background:var(--accent-dim); border:1px solid rgba(204,0,0,.2); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+    .svc-icon svg { width:22px; height:22px; stroke:var(--accent); fill:none; stroke-width:1.6; }
+    .svc-name { font-family:var(--font-head); font-size:1.05rem; font-weight:800; margin-bottom:6px; letter-spacing:-.01em; }
+    .svc-price { font-size:.78rem; color:var(--gray2); margin-bottom:10px; }
+    .svc-price em { font-style:normal; color:var(--accent2); font-weight:700; font-size:.88rem; }
+    .svc-desc { font-size:.84rem; color:var(--gray); line-height:1.75; font-weight:300; }
+    .svc-list { list-style:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--border); }
+    .svc-list li { font-size:.76rem; color:var(--gray2); padding:3px 0 3px 14px; position:relative; }
+    .svc-list li::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:4px; height:4px; background:var(--accent); border-radius:50%; }
+
+    /* ─── Process ────────────────────────────────────────── */
+    #process { position:relative; overflow:hidden; }
+    #process::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 50%,rgba(204,0,0,.05) 0%,transparent 65%); pointer-events:none; }
+    .process-row { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:60px; position:relative; }
+    .process-row::before { content:''; position:absolute; top:30px; left:calc(12.5% + 2px); right:calc(12.5% + 2px); height:1px; background:linear-gradient(to right,transparent,rgba(204,0,0,.35),rgba(204,0,0,.35),rgba(204,0,0,.35),transparent); }
+    .proc-step { text-align:center; padding:0 24px 10px; position:relative; }
+    .proc-circle { width:60px; height:60px; background:var(--bg3); border:1px solid rgba(204,0,0,.45); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 22px; position:relative; font-family:var(--font-head); font-size:1.3rem; font-weight:900; color:var(--accent); }
+    .proc-circle::after { content:''; position:absolute; inset:-5px; border-radius:50%; border:1px solid rgba(204,0,0,.15); }
+    .proc-title { font-family:var(--font-head); font-size:.95rem; font-weight:700; margin-bottom:8px; }
+    .proc-desc { font-size:.8rem; color:var(--gray); line-height:1.7; }
+
+    /* ─── Gallery ────────────────────────────────────────── */
+    .gallery-head { text-align:center; margin-bottom:40px; }
+    .gallery-head .lead { margin:0 auto; }
+    .gallery-tabs { display:flex; gap:0; justify-content:center; margin-bottom:36px; border-bottom:1px solid var(--border); }
+    .gtab { background:none; border:none; color:var(--gray); font-family:var(--font-head); font-weight:700; font-size:.82rem; letter-spacing:.12em; text-transform:uppercase; padding:14px 32px; cursor:pointer; position:relative; transition:color .2s; }
+    .gtab::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; background:var(--accent); transform:scaleX(0); transition:transform .25s; }
+    .gtab.active { color:var(--white); }
+    .gtab.active::after { transform:scaleX(1); }
+    .gallery-panel { display:none; }
+    .gallery-panel.active { display:block; }
+    .gallery-carousel-wrap { position:relative; }
+    .gallery-carousel { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:4px; cursor:grab; }
+    .gallery-carousel:active { cursor:grabbing; }
+    .gallery-carousel::-webkit-scrollbar { display:none; }
+    .gal-slide { flex:0 0 calc(33.333% - 8px); scroll-snap-align:start; border-radius:var(--radius); overflow:hidden; position:relative; aspect-ratio:4/3; border:1px solid var(--border); }
+    .gal-slide img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s ease; }
+    .gal-slide:hover img { transform:scale(1.06); }
+    .gal-slide-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,.5) 0%,transparent 60%); transition:background .3s; }
+    .gal-slide:hover .gal-slide-overlay { background:linear-gradient(to top,rgba(180,0,0,.45) 0%,rgba(0,0,0,.1) 100%); }
+    .gal-carousel-nav { display:flex; align-items:center; justify-content:space-between; margin-top:20px; }
+    .gal-nav-arrows { display:flex; gap:10px; }
+    .gal-arrow { width:40px; height:40px; border-radius:50%; border:1px solid var(--border); background:var(--bg3); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+    .gal-arrow:hover { border-color:rgba(204,0,0,.5); background:rgba(204,0,0,.1); }
+    .gal-arrow svg { width:16px; height:16px; stroke:var(--gray); fill:none; stroke-width:2; }
+    .gal-arrow:hover svg { stroke:var(--accent2); }
+    .gal-count { font-size:.75rem; color:var(--gray2); letter-spacing:.08em; }
+    .gallery-social-footer { text-align:center; padding:48px 0 8px; }
+    .gallery-social-label { font-size:.7rem; color:var(--gray2); letter-spacing:.18em; text-transform:uppercase; font-weight:600; margin-bottom:18px; }
+    .gallery-social-links { display:flex; justify-content:center; gap:14px; }
+    .gal-social-btn { display:inline-flex; align-items:center; gap:10px; background:var(--bg3); border:1px solid var(--border); color:var(--gray); padding:11px 24px; border-radius:var(--radius); font-family:var(--font-head); font-size:.78rem; font-weight:700; letter-spacing:.07em; text-decoration:none; text-transform:uppercase; transition:all .25s; }
+    .gal-social-btn svg { width:17px; height:17px; flex-shrink:0; }
+    .gal-social-btn:hover { color:var(--white); border-color:rgba(204,0,0,.45); background:var(--accent-dim); transform:translateY(-2px); }
+
+    /* ─── Testimonials ───────────────────────────────────── */
+    .testi-carousel-outer { position:relative; overflow:hidden; margin-top:50px; }
+    .testi-carousel { display:flex; transition:transform .5s cubic-bezier(.25,.46,.45,.94); }
+    .testi-slide { flex:0 0 50%; padding:0 11px; }
+    .testi-card { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius); padding:32px; position:relative; height:100%; transition:border-color .25s; }
+    .testi-card:hover { border-color:rgba(204,0,0,.25); }
+    .testi-quote { font-family:var(--font-head); font-size:4.5rem; font-weight:900; color:rgba(204,0,0,.12); line-height:.8; margin-bottom:12px; user-select:none; }
+    .testi-stars { color:var(--accent2); font-size:1rem; letter-spacing:3px; margin-bottom:12px; }
+    .testi-text { font-size:.92rem; color:var(--gray); line-height:1.8; font-weight:300; font-style:italic; margin-bottom:22px; }
+    .testi-author { display:flex; align-items:center; gap:14px; }
+    .testi-avatar { width:40px; height:40px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-weight:800; font-size:.9rem; color:white; flex-shrink:0; }
+    .testi-name { font-weight:600; font-size:.87rem; }
+    .testi-meta { font-size:.72rem; color:var(--gray2); margin-top:2px; }
+    .testi-controls { display:flex; align-items:center; justify-content:space-between; margin-top:28px; }
+    .testi-dots { display:flex; gap:8px; }
+    .testi-dot { width:8px; height:8px; border-radius:50%; background:var(--gray2); cursor:pointer; transition:background .2s,transform .2s; border:none; }
+    .testi-dot.active { background:var(--accent); transform:scale(1.35); }
+    .testi-arrows { display:flex; gap:8px; }
+    .testi-arrow { width:38px; height:38px; border-radius:50%; border:1px solid var(--border); background:var(--bg3); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+    .testi-arrow:hover { border-color:rgba(204,0,0,.5); background:rgba(204,0,0,.1); }
+    .testi-arrow svg { width:15px; height:15px; stroke:var(--gray); fill:none; stroke-width:2; }
+    .testi-arrow:hover svg { stroke:var(--accent2); }
+
+    /* ─── CTA Banner ─────────────────────────────────────── */
+    #cta { background:var(--accent); padding:70px var(--section-h); text-align:center; position:relative; overflow:hidden; }
+    #cta::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(90deg,transparent,transparent 70px,rgba(0,0,0,.06) 70px,rgba(0,0,0,.06) 71px); }
+    #cta::after  { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 70px,rgba(0,0,0,.04) 70px,rgba(0,0,0,.04) 71px); }
+    .cta-title { font-family:var(--font-head); font-size:clamp(1.6rem,3vw,2.5rem); font-weight:900; color:white; margin-bottom:12px; position:relative; z-index:1; }
+    .cta-sub { color:rgba(255,255,255,.75); font-size:1rem; margin-bottom:34px; position:relative; z-index:1; }
+    .btn-white { display:inline-flex; align-items:center; gap:10px; background:white; color:var(--accent); padding:15px 36px; border-radius:var(--radius); font-weight:700; font-size:.95rem; text-decoration:none; letter-spacing:.04em; position:relative; z-index:1; transition:all .25s; }
+    .btn-white:hover { background:#f0f0f0; transform:translateY(-3px); box-shadow:0 14px 36px rgba(0,0,0,.3); }
+
+    /* ─── Contact ────────────────────────────────────────── */
+    #contact { padding-bottom:100px; }
+    .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:start; }
+    .contact-info { margin-top:36px; display:flex; flex-direction:column; gap:30px; }
+    .ci { display:flex; gap:18px; align-items:flex-start; }
+    .ci-icon { width:44px; min-width:44px; height:44px; background:var(--accent-dim); border:1px solid rgba(204,0,0,.2); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; }
+    .ci-icon svg { width:20px; height:20px; stroke:var(--accent); fill:none; stroke-width:1.6; }
+    .ci-label { font-size:.68rem; color:var(--gray2); letter-spacing:.14em; text-transform:uppercase; font-weight:600; margin-bottom:4px; }
+    .ci-val { font-size:.98rem; color:var(--white); font-weight:500; line-height:1.5; }
+    .ci-val a { color:var(--white); text-decoration:none; transition:color .2s; }
+    .ci-val a:hover { color:var(--accent2); }
+    .hours-table { display:flex; flex-direction:column; margin-top:8px; }
+    .h-row { display:flex; justify-content:space-between; font-size:.84rem; padding:9px 0; border-bottom:1px solid var(--border); gap:20px; }
+    .h-day { color:var(--gray); }
+    .h-time { color:var(--white); font-weight:500; }
+    .contact-socials { display:flex; gap:14px; margin-top:4px; flex-wrap:wrap; }
+    .contact-social-btn { display:inline-flex; align-items:center; gap:8px; background:var(--bg3); border:1px solid var(--border); color:var(--gray); padding:9px 18px; border-radius:var(--radius); font-size:.78rem; font-weight:600; letter-spacing:.04em; text-decoration:none; transition:all .25s; }
+    .contact-social-btn svg { width:16px; height:16px; flex-shrink:0; }
+    .contact-social-btn:hover { color:var(--white); border-color:rgba(204,0,0,.4); background:var(--accent-dim); }
+    .map-wrap { height:420px; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); position:relative; }
+    .map-wrap iframe { width:100%; height:100%; border:none; filter:grayscale(90%) invert(92%) hue-rotate(180deg) brightness(.45) contrast(1.3) saturate(1.2); }
+    .map-pin-overlay { position:absolute; bottom:16px; left:16px; background:rgba(8,8,8,.88); border:1px solid rgba(204,0,0,.35); backdrop-filter:blur(8px); border-radius:var(--radius); padding:10px 14px; z-index:2; font-size:.78rem; }
+    .map-pin-name { font-family:var(--font-head); font-weight:700; font-size:.85rem; color:var(--white); margin-bottom:3px; }
+    .map-pin-addr { color:var(--gray); }
+
+    /* ─── Footer ─────────────────────────────────────────── */
+    footer { background:var(--bg); border-top:1px solid var(--border); padding:36px var(--section-h); }
+    .footer-inner { display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
+    .footer-logo { font-family:var(--font-head); font-weight:900; font-size:1.1rem; }
+    .footer-logo em { color:var(--accent); font-style:normal; }
+    .footer-copy { font-size:.76rem; color:var(--gray2); }
+    .footer-links { display:flex; gap:22px; }
+    .footer-links a { font-size:.76rem; color:var(--gray2); text-decoration:none; transition:color .2s; }
+    .footer-links a:hover { color:var(--white); }
+
+    /* ─── Responsive ─────────────────────────────────────── */
+    @media (max-width:1100px) {
+      .svc-grid { grid-template-columns:repeat(2,1fr); }
+      .stats-inner { grid-template-columns:repeat(2,1fr); }
+      .stat-item:nth-child(2){ border-right:0; }
+      .stat-item:nth-child(3){ border-right:1px solid var(--border); border-top:1px solid var(--border); }
+      .stat-item:nth-child(4){ border-top:1px solid var(--border); }
+    }
+    @media (max-width:860px) {
+      #nav { padding:16px 5%; }
+      #nav.stuck { padding:12px 5%; }
+      .nav-links { display:none; }
+      .hamburger { display:flex; }
+      .section { padding:70px 5%; }
+      #stats { padding:0 5%; }
+      .about-grid,.contact-grid { grid-template-columns:1fr; gap:50px; }
+      .svc-grid { grid-template-columns:1fr; }
+      .svc-header { flex-direction:column; align-items:flex-start; }
+      .process-row { grid-template-columns:repeat(2,1fr); gap:36px; }
+      .process-row::before { display:none; }
+      .testi-slide { flex:0 0 100%; }
+      #hero { padding:0 5%; }
+      .hero-bg { background-position:52% center; }
+      .hero-veil { background:linear-gradient(to right,rgba(8,8,8,.95) 0%,rgba(8,8,8,.85) 45%,rgba(8,8,8,.6) 75%,rgba(8,8,8,.3) 100%); }
+      .nav-logo { font-size:1rem; }
+      .hero-btns { flex-wrap:wrap; }
+      .gal-slide { flex:0 0 calc(50% - 6px); }
+      .map-wrap { height:320px; }
+    }
+    @media (max-width:560px) {
+      .stats-inner { grid-template-columns:repeat(2,1fr); }
+      .about-features { grid-template-columns:1fr; }
+      .process-row { grid-template-columns:1fr; }
+      .footer-inner { flex-direction:column; text-align:center; }
+      .gal-slide { flex:0 0 calc(85% - 6px); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     ██████╗ ██████╗  █████╗ ███╗   ██╗██████╗
+     ██╔══██╗██╔══██╗██╔══██╗████╗  ██║██╔══██╗
+     ██████╔╝██████╔╝███████║██╔██╗ ██║██║  ██║
+     ██╔══██╗██╔══██╗██╔══██║██║╚██╗██║██║  ██║
+     ██████╔╝██║  ██║██║  ██║██║ ╚████║██████╔╝
+     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝
+
+     SITE CONFIGURATION — Edit ONLY this block to rebrand.
+     All business content, photos, and copy lives here.
+     No other part of the file needs to change for a new client.
+     ════════════════════════════════════════════════════════════ -->
+<script>
+const SITE = {
+
+  /* ── SEO ─────────────────────────────────────────────────── */
+  pageTitle:  'Exotic Auto Detailing | Vineland, NJ',
+  metaDesc:   "South Jersey's premier auto detailing shop. 20+ years of professional detailing in Vineland, NJ. Call (856) 205-9222.",
+
+  /* ── Brand ───────────────────────────────────────────────── */
+  name:       'Exotic Auto Detailing',
+  nameHtml:   'EXOTIC <em>AUTO</em> DETAILING',  /* bold logo text — wrap one word in <em> for accent color */
+  tagline:    "South Jersey's Premier Detail Shop",
+  year:       '2025',
+  location:   'Vineland, NJ',
+
+  /* ── Hero ────────────────────────────────────────────────── */
+  heroBg:    'images/Auto Detailer Website Photos-4.png',  /* photo shown right-side of hero */
+  heroTitle: 'Your Car Deserves<br><em>Flawless</em> Perfection',
+  heroSub:   "Vineland's most trusted auto detailing studio. Over 20 years of professional-grade results — every painted surface shines, every interior is spotless.",
+
+  /* ── Contact ─────────────────────────────────────────────── */
+  phone:     '(856) 205-9222',
+  phoneRaw:  '8562059222',          /* digits only, used in tel: links */
+  address1:  '580 N West Blvd',
+  address2:  'Vineland, NJ 08360',
+  mapsLink:  'https://maps.google.com/?q=580+N+West+Blvd+Vineland+NJ+08360',
+  mapEmbed:  'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3054.8!2d-75.0281343!3d39.5011515!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c72d8622eef3af%3A0x87be69fe62d8694c!2sExotic%20Auto%20Detailing!5e0!3m2!1sen!2sus!4v1716400000000',
+  mapLabel:  'Exotic Auto Detailing',
+
+  /* ── Social (set to '' to hide a button) ─────────────────── */
+  facebook:  'https://www.facebook.com/p/Exotic-Auto-Detailing-100057249652477/',
+  instagram: 'https://www.instagram.com/exoticautodetailing856?igsh=MTVsajgyYnNhanU0aw==',
+
+  /* ── Hours ───────────────────────────────────────────────── */
+  hours: [
+    { days: 'Mon – Fri', time: '8:00 AM – 5:30 PM' },
+    { days: 'Saturday',  time: '8:00 AM – 5:30 PM' },
+    { days: 'Sunday',    time: '8:00 AM – 5:30 PM' },
+  ],
+
+  /* ── Stats bar ───────────────────────────────────────────── */
+  stats: [
+    { num: '20+',  label: 'Years in Business'  },
+    { num: '100%', label: 'Fully Insured'       },
+    { num: 'S.NJ', label: 'South Jersey Proud'  },
+    { num: '5★',   label: 'Premium Results'     },
+  ],
+
+  /* ── About section ───────────────────────────────────────── */
+  about: {
+    photo:    'images/Auto Detailer Website Photos-11.jpeg',
+    photoAlt: 'Professional auto detailing',
+    badgeNum: '20+',
+    badgeTxt: 'Years of Excellence',
+    title:    'Passion for<br>Perfection in<br>Every Detail',
+    body:     "Located at 580 N West Blvd in Vineland, New Jersey, Exotic Auto Detailing has been the go-to choice for South Jersey car enthusiasts for over two decades. We're fully insured and treat every vehicle — from daily drivers to show cars — with meticulous, hands-on care.",
+    features: [
+      { name: 'Fully Insured',        sub: 'Your vehicle is protected',   icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>' },
+      { name: '20+ Years Experience', sub: 'Decades of craftsmanship',     icon: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>' },
+      { name: 'South Jersey Trusted', sub: 'Community-rooted service',     icon: '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>' },
+      { name: 'Premium Results',      sub: 'Showroom-grade finish',        icon: '<polyline points="20 6 9 17 4 12"/>' },
+    ],
+  },
+
+  /* ── Services ────────────────────────────────────────────── */
+  /* icon: SVG inner path(s) only — the <svg> wrapper is added automatically */
+  services: [
+    {
+      num: '01', name: 'Full Interior Detail', price: '$150',
+      photo: 'images/Auto Detailer Website Photos-1.jpeg', photoAlt: 'Interior detail',
+      desc: 'Deep-clean every surface inside your vehicle. Every fabric is spotless, every crevice is attended to.',
+      list: ['Vacuum &amp; steam cleaning', 'Leather conditioning', 'Dashboard &amp; trim dressing', 'Glass cleaning'],
+      icon: '<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+    },
+    {
+      num: '02', name: 'Full Exterior Detail', price: '$150',
+      photo: 'images/Auto Detailer Website Photos-2.png', photoAlt: 'Exterior detail',
+      desc: 'Everything painted shines. Hand wash, clay bar, and premium protection applied to every panel.',
+      list: ['Hand wash &amp; dry', 'Clay bar decontamination', 'Tire &amp; wheel cleaning', 'Trim restoration'],
+      icon: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    },
+    {
+      num: '03', name: 'Wash &amp; Wax', price: '$80',
+      photo: 'images/Auto Detailer Website Photos-6.png', photoAlt: 'Wash and wax',
+      desc: 'Our signature combo leaves your paint gleaming with a deep, lasting protective shine every time.',
+      list: ['Two-bucket hand wash', 'Carnauba wax application', 'Streak-free glass', 'Tire dressing'],
+      icon: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>',
+    },
+    {
+      num: '04', name: 'Paint Correction', price: '$250',
+      photo: 'images/Auto Detailer Website Photos-17.png', photoAlt: 'Paint correction',
+      desc: "Remove swirl marks, scratches, and oxidation. Restore depth and clarity to your vehicle's paint finish.",
+      list: ['Swirl &amp; scratch removal', 'Paint depth restoration', 'Single &amp; multi-stage polish', 'Sealant protection'],
+      icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    },
+    {
+      num: '05', name: 'Engine Bay Cleaning', price: '$100',
+      photo: 'images/Auto Detailer Website Photos-16.jpeg', photoAlt: 'Engine bay cleaning',
+      desc: "A clean engine bay isn't just aesthetic — it helps with maintenance visibility and preserves components.",
+      list: ['Degreasing &amp; rinse', 'Detail brush cleaning', 'Plastic &amp; rubber dressing', 'Electronics protection'],
+      icon: '<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>',
+    },
+    {
+      num: '06', name: 'Headlight Restoration', price: '$75',
+      photo: 'images/Auto Detailer Website Photos-9.jpeg', photoAlt: 'Headlight restoration',
+      desc: "Yellowed, hazy headlights reduce visibility and drag down your car's appearance. We restore crystal clarity.",
+      list: ['Sanding &amp; polishing', 'UV protective coating', 'Clarity restoration', 'Long-lasting results'],
+      icon: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+    },
+  ],
+
+  /* ── Process steps ───────────────────────────────────────── */
+  process: [
+    { num: '01', title: 'Book Your Appointment', desc: "Give us a call. We'll discuss your vehicle and find the right service package." },
+    { num: '02', title: 'Drop Off Your Vehicle', desc: "Bring your car to our location. We'll perform a walk-around inspection together." },
+    { num: '03', title: 'Expert Detailing',       desc: 'Our team meticulously works through every inch of your vehicle with professional-grade products.' },
+    { num: '04', title: 'Pick Up &amp; Shine',    desc: 'We walk you through the completed work. Drive away in a vehicle that looks better than new.' },
+  ],
+
+  /* ── Gallery tabs ────────────────────────────────────────── */
+  /* Add / remove tabs freely. photos[] = array of image paths. */
+  gallery: [
+    {
+      label: 'Exterior',
+      photos: [
+        'images/Exterior/603737973_1468457581739216_5154057157527217783_n.jpg',
+        'images/Exterior/603781610_1468457598405881_7054253060088534209_n.jpg',
+        'images/Exterior/603808538_1467720595146248_6896120867521002394_n.jpg',
+        'images/Exterior/604927554_1468457511739223_9199523606894078846_n.jpg',
+        'images/Exterior/629737252_1506631827921791_465618862715426511_n.jpg',
+        'images/Exterior/633776465_1511142407470733_4365704242557535048_n.jpg',
+        'images/Exterior/633864773_1511142437470730_733338030284165698_n.jpg',
+        'images/Exterior/650558439_1533688748549432_8690029767001879760_n.jpg',
+        'images/Exterior/652440904_1538670488051258_6158793810054749125_n.jpg',
+        'images/Exterior/672091705_1564974565420850_838528827324195728_n.jpg',
+        'images/Exterior/672161316_1564974568754183_8075280844805691615_n.jpg',
+        'images/Exterior/693600448_1585700130014960_1267482822215070006_n.jpg',
+        'images/Exterior/703734694_1595417639043209_1299775677793038448_n.jpg',
+      ],
+    },
+    {
+      label: 'Interior',
+      photos: [
+        'images/Interior/532925596_1352047586713550_3701505555902523631_n.jpg',
+        'images/Interior/554100110_1389583036293338_2595194050041170043_n.jpg',
+        'images/Interior/486550739_1231648168753493_5908068721947413505_n.jpg',
+        'images/Interior/656694089_1543253374259636_1130097572272443985_n.jpg',
+        'images/Interior/660913897_1551489680102672_8443788556794756977_n.jpg',
+        'images/Interior/702361095_1595417745709865_5365603817486597148_n.jpg',
+        'images/Interior/703752271_1595417695709870_404994050792379529_n.jpg',
+        'images/Interior/488247952_1240874287830881_8136279316401579447_n.jpg',
+        'images/Interior/488478973_1240878401163803_4104920801225675311_n.jpg',
+        'images/Interior/489676474_1246258887292421_2785036616385436945_n.jpg',
+      ],
+    },
+  ],
+
+  /* ── Testimonials ────────────────────────────────────────── */
+  testimonials: [
+    { initial:'M', name:'Mike R.',       meta:'Vineland, NJ · Verified Customer',  text:'"Everything painted shines and everything fabric is spotless. Best price for the quality you get in all of South Jersey. I won\'t go anywhere else."' },
+    { initial:'J', name:'Jason T.',      meta:'Millville, NJ · Regular Customer',  text:'"Brought my lifted Ram in for a full exterior detail. They got into every crevice. The chrome wheels looked brand new. These guys have real passion for what they do."' },
+    { initial:'C', name:'Chris V.',      meta:'Vineland, NJ · Car Enthusiast',     text:'"Took my Camaro in before a car show and walked away with a trophy. The paint correction they did was unbelievable — looked like it just rolled off the factory floor."' },
+    { initial:'S', name:'Stephanie K.', meta:'Bridgeton, NJ · Verified Customer', text:'"Called on a Friday, dropped off Saturday morning, picked up same day looking brand new. Incredible turnaround time without cutting any corners on the detail."' },
+    { initial:'D', name:'Danny M.',      meta:'Vineland, NJ · Verified Customer',  text:'"Finally found a detailer that actually cares. Interior was spotless — you could eat off the floor mats. Exterior had a mirror finish. Will be a customer for life."' },
+    { initial:'T', name:'Tony R.',       meta:'Millville, NJ · Repeat Customer',   text:'"Engine bay came out looking better than when the car was new. I\'ve been to plenty of detailers around South Jersey — nobody touches Exotic Auto. Worth every penny."' },
+  ],
+
+  /* ── CTA Banner ──────────────────────────────────────────── */
+  ctaTitle: 'Ready to Transform Your Vehicle?',
+  ctaSub:   "Call us today and let's bring your car back to its best.",
+
+  /* ── Section labels (UI copy, not business-specific) ─────── */
+  labels: {
+    about:        'About Us',
+    aboutTitle:   'Passion for<br>Perfection in<br>Every Detail',
+    services:     'What We Do',
+    servicesHead: 'Professional Services<br>Built for Perfectionists',
+    servicesSub:  'From a thorough interior refresh to a full exterior paint correction, we offer everything your vehicle needs to look its absolute best.',
+    process:      'How It Works',
+    processHead:  'Simple. Seamless.<br>Spotless Results.',
+    gallery:      'Our Work',
+    galleryHead:  'Real Results.<br>Real Customers.',
+    gallerySub:   'Every photo is a vehicle that left our shop looking its absolute best.',
+    galleryCTA:   'See More of Our Work',
+    reviews:      'Customer Reviews',
+    reviewsHead:  'What Our Customers Are Saying',
+    contact:      'Find Us',
+    contactHead:  'Come See Us',
+  },
+};
+</script>
+<!-- ══════════════════════════════════════════════════════════ -->
+
+
+<!-- ══ NAV ════════════════════════════════════════════════════ -->
+<nav id="nav">
+  <a href="#hero" class="nav-logo" id="navLogo"></a>
+  <ul class="nav-links" id="navLinks"></ul>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</nav>
+<div class="mobile-menu" id="mobileMenu"></div>
+
+<!-- ══ HERO SECTION ═══════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-bg-dim"></div>
+  <div class="hero-veil"></div>
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-glow-r"></div>
+  <div class="hero-content" id="heroContent"></div>
+  <div class="scroll-hint">
+    <div class="scroll-hint-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ══ STATS BAR ══════════════════════════════════════════════ -->
+<div id="stats">
+  <div class="stats-inner" id="statsInner"></div>
+</div>
+
+<!-- ══ ABOUT SECTION ══════════════════════════════════════════ -->
+<section id="about" class="section section-dark">
+  <div class="about-grid" id="aboutGrid"></div>
+</section>
+
+<!-- ══ SERVICES SECTION ═══════════════════════════════════════ -->
+<section id="services" class="section section-dark2">
+  <div class="svc-header" id="svcHeader"></div>
+  <div class="svc-grid"   id="svcGrid"></div>
+</section>
+
+<!-- ══ PROCESS SECTION ════════════════════════════════════════ -->
+<section id="process" class="section section-dark">
+  <div id="processHead" style="text-align:center;margin-bottom:10px"></div>
+  <div class="process-row" id="processRow"></div>
+</section>
+
+<!-- ══ GALLERY SECTION ════════════════════════════════════════ -->
+<section id="gallery" class="section section-dark3">
+  <div class="gallery-head fade-up"  id="galleryHead"></div>
+  <div class="gallery-tabs fade-up"  id="galleryTabs" style="transition-delay:.1s"></div>
+  <div id="galleryPanels"></div>
+  <div class="gallery-social-footer fade-up" id="galSocialFooter"></div>
+</section>
+
+<!-- ══ TESTIMONIALS SECTION ═══════════════════════════════════ -->
+<section id="testimonials" class="section section-dark">
+  <span class="tag fade-up" id="reviewTag"></span>
+  <h2 class="section-title fade-up" id="reviewHead" style="transition-delay:.1s"></h2>
+  <div class="testi-carousel-outer fade-up" style="transition-delay:.2s">
+    <div class="testi-carousel" id="testiCarousel"></div>
+  </div>
+  <div class="testi-controls">
+    <div class="testi-dots" id="testiDots"></div>
+    <div class="testi-arrows">
+      <button class="testi-arrow" id="tPrev"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button class="testi-arrow" id="tNext"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA BANNER ═════════════════════════════════════════════ -->
+<div id="cta">
+  <div class="cta-title fade-up" id="ctaTitle"></div>
+  <p  class="cta-sub fade-up"   id="ctaSub"   style="transition-delay:.1s"></p>
+  <a  class="btn-white fade-up"  id="ctaBtn"   style="transition-delay:.2s"></a>
+</div>
+
+<!-- ══ CONTACT SECTION ════════════════════════════════════════ -->
+<section id="contact" class="section section-dark2">
+  <div class="contact-grid" id="contactGrid"></div>
+</section>
+
+<!-- ══ FOOTER ═════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-inner" id="footerInner"></div>
+</footer>
+
+
+<!-- ══ SCRIPTS ════════════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────────────────────
+   RENDER FUNCTIONS
+   These read from SITE config and write into the DOM.
+   No business-specific strings live below this comment.
+   ───────────────────────────────────────────────────────────── */
+
+const PHONE_SVG = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.63a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>`;
+const FB_SVG    = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>`;
+const IG_SVG    = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>`;
+
+function socialBtns(cls) {
+  const btns = [];
+  if (SITE.facebook)  btns.push(`<a href="${SITE.facebook}"  target="_blank" rel="noopener" class="${cls}">${FB_SVG} Facebook</a>`);
+  if (SITE.instagram) btns.push(`<a href="${SITE.instagram}" target="_blank" rel="noopener" class="${cls}">${IG_SVG} Instagram</a>`);
+  return btns.join('');
+}
+
+/* Meta */
+function renderMeta() {
+  document.title = SITE.pageTitle;
+  document.querySelector('meta[name="description"]').content = SITE.metaDesc;
+}
+
+/* Nav */
+function renderNav() {
+  document.getElementById('navLogo').innerHTML = SITE.nameHtml;
+  const links = [['#about','About'],['#services','Services'],['#gallery','Gallery'],['#testimonials','Reviews'],['#contact','Contact']];
+  document.getElementById('navLinks').innerHTML =
+    links.map(([h,l]) => `<li><a href="${h}">${l}</a></li>`).join('') +
+    `<li><a href="tel:${SITE.phoneRaw}" class="nav-call">Call Now</a></li>`;
+  document.getElementById('mobileMenu').innerHTML =
+    links.map(([h,l]) => `<a href="${h}" onclick="closeMobile()">${l}</a>`).join('') +
+    `<a href="tel:${SITE.phoneRaw}" style="color:var(--accent)">&#9742; ${SITE.phone}</a>`;
+}
+
+/* Hero */
+function renderHero() {
+  document.getElementById('heroBg').style.backgroundImage = `url('${SITE.heroBg}')`;
+  document.getElementById('heroContent').innerHTML = `
+    <div class="hero-badge">${SITE.tagline}</div>
+    <h1 class="hero-title">${SITE.heroTitle}</h1>
+    <p class="hero-sub">${SITE.heroSub}</p>
+    <div class="hero-btns">
+      <a href="tel:${SITE.phoneRaw}" class="btn-red">${PHONE_SVG} ${SITE.phone}</a>
+      <a href="#services" class="btn-ghost">View Services
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>`;
+}
+
+/* Stats */
+function renderStats() {
+  document.getElementById('statsInner').innerHTML = SITE.stats.map((s,i) =>
+    `<div class="stat-item fade-up" style="transition-delay:${i*.1}s">
+       <div class="stat-num">${s.num}</div>
+       <div class="stat-label">${s.label}</div>
+     </div>`).join('');
+}
+
+/* About */
+function renderAbout() {
+  const a = SITE.about;
+  document.getElementById('aboutGrid').innerHTML = `
+    <div class="about-visual-wrap fade-up">
+      <div class="about-card">
+        <div class="about-card-line"></div>
+        <img src="${a.photo}" alt="${a.photoAlt}" class="about-photo">
+      </div>
+      <div class="about-years-badge">
+        <div class="badge-num">${a.badgeNum}</div>
+        <div class="badge-txt">${a.badgeTxt}</div>
+      </div>
+    </div>
+    <div class="fade-up" style="transition-delay:.15s">
+      <span class="tag">${SITE.labels.about}</span>
+      <h2 class="section-title">${SITE.labels.aboutTitle}</h2>
+      <p class="lead">${a.body}</p>
+      <div class="about-features">
+        ${a.features.map(f => `
+          <div class="feat">
+            <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">${f.icon}</svg></div>
+            <div><div class="feat-name">${f.name}</div><div class="feat-sub">${f.sub}</div></div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* Services */
+function renderServices() {
+  const delays = [0,.08,.16,.04,.12,.2];
+  document.getElementById('svcHeader').innerHTML = `
+    <div>
+      <span class="tag">${SITE.labels.services}</span>
+      <h2 class="section-title fade-up">${SITE.labels.servicesHead}</h2>
+    </div>
+    <p class="lead fade-up" style="transition-delay:.1s">${SITE.labels.servicesSub}</p>`;
+  document.getElementById('svcGrid').innerHTML = SITE.services.map((s,i) => `
+    <div class="svc-card fade-up" style="transition-delay:${delays[i]||0}s">
+      <div class="svc-card-photo">
+        <img src="${s.photo}" alt="${s.photoAlt}" class="svc-card-img" loading="lazy">
+        <div class="svc-card-photo-grad"></div>
+        <div class="svc-num">${s.num}</div>
+      </div>
+      <div class="svc-card-body">
+        <div class="svc-icon"><svg viewBox="0 0 24 24">${s.icon}</svg></div>
+        <div class="svc-name">${s.name}</div>
+        <div class="svc-price">Starting at <em>${s.price}</em></div>
+        <p class="svc-desc">${s.desc}</p>
+        <ul class="svc-list">${s.list.map(li=>`<li>${li}</li>`).join('')}</ul>
+      </div>
+    </div>`).join('');
+}
+
+/* Process */
+function renderProcess() {
+  document.getElementById('processHead').innerHTML = `
+    <span class="tag fade-up">${SITE.labels.process}</span>
+    <h2 class="section-title fade-up" style="transition-delay:.1s">${SITE.labels.processHead}</h2>`;
+  document.getElementById('processRow').innerHTML = SITE.process.map((p,i) => `
+    <div class="proc-step fade-up" style="transition-delay:${i*.12}s">
+      <div class="proc-circle">${p.num}</div>
+      <div class="proc-title">${p.title}</div>
+      <p class="proc-desc">${p.desc}</p>
+    </div>`).join('');
+}
+
+/* Gallery */
+function renderGallery() {
+  document.getElementById('galleryHead').innerHTML = `
+    <span class="tag">${SITE.labels.gallery}</span>
+    <h2 class="section-title">${SITE.labels.galleryHead}</h2>
+    <p class="lead">${SITE.labels.gallerySub}</p>`;
+
+  document.getElementById('galleryTabs').innerHTML = SITE.gallery.map((t,i) =>
+    `<button class="gtab${i===0?' active':''}" data-tab="${i}">${t.label}</button>`).join('');
+
+  document.getElementById('galleryPanels').innerHTML = SITE.gallery.map((t,i) => {
+    const id = `gal-${i}`, cid = `galCount-${i}`, n = t.photos.length;
+    return `
+      <div class="gallery-panel${i===0?' active':''}" data-tab="${i}">
+        <div class="gallery-carousel-wrap">
+          <div class="gallery-carousel" id="${id}">
+            ${t.photos.map(src=>`
+              <div class="gal-slide">
+                <img src="${src}" alt="${t.label} work" loading="lazy">
+                <div class="gal-slide-overlay"></div>
+              </div>`).join('')}
+          </div>
+          <div class="gal-carousel-nav">
+            <span class="gal-count" id="${cid}">1 – 3 of ${n}</span>
+            <div class="gal-nav-arrows">
+              <button class="gal-arrow" onclick="scrollGal('${id}','${cid}',${n},-1)"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+              <button class="gal-arrow" onclick="scrollGal('${id}','${cid}',${n},1)"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>`;}).join('');
+
+  const social = socialBtns('gal-social-btn');
+  document.getElementById('galSocialFooter').innerHTML = social
+    ? `<p class="gallery-social-label">${SITE.labels.galleryCTA}</p><div class="gallery-social-links">${social}</div>`
+    : '';
+}
+
+/* Testimonials */
+function renderTestimonials() {
+  document.getElementById('reviewTag').textContent  = SITE.labels.reviews;
+  document.getElementById('reviewHead').innerHTML   = SITE.labels.reviewsHead;
+  document.getElementById('testiCarousel').innerHTML = SITE.testimonials.map(t => `
+    <div class="testi-slide">
+      <div class="testi-card">
+        <div class="testi-quote">"</div>
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">${t.text}</p>
+        <div class="testi-author">
+          <div class="testi-avatar">${t.initial}</div>
+          <div><div class="testi-name">${t.name}</div><div class="testi-meta">${t.meta}</div></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* CTA */
+function renderCTA() {
+  document.getElementById('ctaTitle').textContent = SITE.ctaTitle;
+  document.getElementById('ctaSub').textContent   = SITE.ctaSub;
+  const btn = document.getElementById('ctaBtn');
+  btn.href      = `tel:${SITE.phoneRaw}`;
+  btn.innerHTML = `${PHONE_SVG} ${SITE.phone}`;
+}
+
+/* Contact */
+function renderContact() {
+  const social = socialBtns('contact-social-btn');
+  document.getElementById('contactGrid').innerHTML = `
+    <div>
+      <span class="tag fade-up">${SITE.labels.contact}</span>
+      <h2 class="section-title fade-up" style="transition-delay:.1s">${SITE.labels.contactHead}<br><span style="font-size:.7em;opacity:.6">${SITE.location}</span></h2>
+      <div class="contact-info fade-up" style="transition-delay:.2s">
+        <div class="ci">
+          <div class="ci-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          <div><div class="ci-label">Address</div>
+               <div class="ci-val"><a href="${SITE.mapsLink}" target="_blank" rel="noopener">${SITE.address1}<br>${SITE.address2}</a></div></div>
+        </div>
+        <div class="ci">
+          <div class="ci-icon"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.63a19.79 19.79 0 01-3.07-8.63A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+          <div><div class="ci-label">Phone</div>
+               <div class="ci-val"><a href="tel:${SITE.phoneRaw}">${SITE.phone}</a></div></div>
+        </div>
+        <div class="ci">
+          <div class="ci-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div><div class="ci-label">Hours</div>
+               <div class="ci-val"><div class="hours-table">
+                 ${SITE.hours.map(h=>`<div class="h-row"><span class="h-day">${h.days}</span><span class="h-time">${h.time}</span></div>`).join('')}
+               </div></div></div>
+        </div>
+        ${social ? `
+        <div class="ci">
+          <div class="ci-icon"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg></div>
+          <div><div class="ci-label">Follow Us</div>
+               <div class="ci-val"><div class="contact-socials">${social}</div></div></div>
+        </div>` : ''}
+      </div>
+    </div>
+    <div class="fade-up" style="transition-delay:.25s">
+      <div class="map-wrap">
+        <iframe src="${SITE.mapEmbed}" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="${SITE.mapLabel} map"></iframe>
+        <div class="map-pin-overlay">
+          <div class="map-pin-name">${SITE.mapLabel}</div>
+          <div class="map-pin-addr">${SITE.address1}, ${SITE.address2}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* Footer */
+function renderFooter() {
+  document.getElementById('footerInner').innerHTML = `
+    <div class="footer-logo">${SITE.nameHtml}</div>
+    <div class="footer-copy">© ${SITE.year} ${SITE.name} · ${SITE.location} · All rights reserved.</div>
+    <div class="footer-links">
+      <a href="tel:${SITE.phoneRaw}">Call Us</a>
+      <a href="#services">Services</a>
+      <a href="#contact">Directions</a>
+    </div>`;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   INITIALIZE — render all sections, then wire up interactions
+   ───────────────────────────────────────────────────────────── */
+renderMeta();
+renderNav();
+renderHero();
+renderStats();
+renderAbout();
+renderServices();
+renderProcess();
+renderGallery();
+renderTestimonials();
+renderCTA();
+renderContact();
+renderFooter();
+
+/* ── Nav scroll behavior ─────────────────────────────────────── */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => nav.classList.toggle('stuck', window.scrollY > 60), { passive:true });
+
+/* ── Mobile menu ─────────────────────────────────────────────── */
+const burger = document.getElementById('hamburger');
+const mmenu  = document.getElementById('mobileMenu');
+burger.addEventListener('click', () => mmenu.classList.toggle('open'));
+function closeMobile() { mmenu.classList.remove('open'); }
+
+/* ── Smooth anchor offset ────────────────────────────────────── */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]');
+  if (!a) return;
+  const t = document.querySelector(a.getAttribute('href'));
+  if (!t) return;
+  e.preventDefault();
+  window.scrollTo({ top: t.offsetTop - nav.offsetHeight - 10, behavior:'smooth' });
+});
+
+/* ── Scroll-spy fade-up (runs after render so all .fade-up exist) ── */
+const io = new IntersectionObserver(
+  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }),
+  { threshold:.1 }
+);
+document.querySelectorAll('.fade-up').forEach(el => io.observe(el));
+
+/* ── Hero water-mist canvas animation ────────────────────────── */
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H;
+  function resize() { W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
+
+  class Drop {
+    constructor(init) { this.reset(init); }
+    reset(randomY=false) {
+      this.x = Math.random()*W; this.y = randomY ? Math.random()*H : -20;
+      this.mist = Math.random() < .62;
+      if (this.mist) { this.r=Math.random()*2+.4; this.vy=Math.random()*1.1+.2; this.vx=(Math.random()-.5)*2.2; this.alpha=Math.random()*.18+.03; }
+      else           { this.r=Math.random()*1.4+.4; this.elong=Math.random()*3.5+2; this.vy=Math.random()*7+3.5; this.vx=(Math.random()-.5)*.7; this.alpha=Math.random()*.45+.1; }
+    }
+    update() { this.x+=this.vx; this.y+=this.vy; if(this.y>H+20||this.x<-10||this.x>W+10) this.reset(); }
+    draw() {
+      ctx.save(); ctx.globalAlpha=this.alpha;
+      if (this.mist) { ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fillStyle='rgba(185,220,255,1)'; ctx.fill(); }
+      else {
+        ctx.beginPath(); ctx.ellipse(this.x,this.y,this.r*.45,this.r*this.elong,0,0,Math.PI*2); ctx.fillStyle='rgba(155,205,255,1)'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(this.x-this.r*.14,this.y-this.r*.55,this.r*.18,this.r*.65,0,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  class Streak {
+    constructor() { this.reset(); }
+    reset() { this.x=W+80+Math.random()*100; this.y=Math.random()*H*.65+H*.1; this.len=Math.random()*130+45; this.vx=-(Math.random()*13+7); this.vy=Math.random()*3.5+.8; this.alpha=Math.random()*.1+.025; this.w=Math.random()*1.5+.3; this.life=0; this.maxLife=Math.floor(Math.random()*30+18); }
+    update() { this.x+=this.vx; this.y+=this.vy; this.life++; if(this.life>this.maxLife||this.x<-this.len-50) this.reset(); }
+    draw() { const a=this.alpha*Math.sin((this.life/this.maxLife)*Math.PI); ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle='rgba(200,235,255,1)'; ctx.lineWidth=this.w; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(this.x,this.y); ctx.lineTo(this.x+this.len,this.y-this.len*.04); ctx.stroke(); ctx.restore(); }
+  }
+
+  let drops, streaks;
+  function init() { resize(); drops=Array.from({length:135},()=>new Drop(true)); streaks=Array.from({length:9},()=>new Streak()); }
+  function loop() { ctx.clearRect(0,0,W,H); drops.forEach(d=>{d.update();d.draw();}); streaks.forEach(s=>{s.update();s.draw();}); requestAnimationFrame(loop); }
+  window.addEventListener('resize', resize, {passive:true});
+  init(); loop();
+})();
+
+/* ── Gallery tab switching ────────────────────────────────────── */
+document.getElementById('galleryTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.gtab');
+  if (!btn) return;
+  const tab = btn.dataset.tab;
+  document.querySelectorAll('.gtab').forEach(b => b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.gallery-panel').forEach(p => p.classList.toggle('active', p.dataset.tab===tab));
+});
+
+/* ── Gallery carousel scroll + count ─────────────────────────── */
+const galState = {};
+function scrollGal(carouselId, countId, total, dir) {
+  const el      = document.getElementById(carouselId);
+  const perView = window.innerWidth>=860 ? 3 : window.innerWidth>=560 ? 2 : 1;
+  const slideW  = el.querySelector('.gal-slide').offsetWidth + 12;
+  if (!galState[carouselId]) galState[carouselId] = 0;
+  galState[carouselId] = Math.max(0, Math.min(galState[carouselId]+dir, total-perView));
+  el.scrollTo({ left: galState[carouselId]*slideW, behavior:'smooth' });
+  const start = galState[carouselId]+1, end = Math.min(galState[carouselId]+perView, total);
+  document.getElementById(countId).textContent = `${start} – ${end} of ${total}`;
+}
+
+/* ── Gallery drag-to-scroll ──────────────────────────────────── */
+document.querySelectorAll('.gallery-carousel').forEach(el => {
+  let startX, startScroll, dragging=false;
+  el.addEventListener('mousedown',  e => { dragging=true; startX=e.pageX-el.offsetLeft; startScroll=el.scrollLeft; el.style.userSelect='none'; });
+  el.addEventListener('mouseleave', () => dragging=false);
+  el.addEventListener('mouseup',    () => { dragging=false; el.style.userSelect=''; });
+  el.addEventListener('mousemove',  e => { if(!dragging)return; e.preventDefault(); el.scrollLeft=startScroll-(e.pageX-el.offsetLeft-startX); });
+});
+
+/* ── Testimonial carousel ────────────────────────────────────── */
+(function() {
+  const carousel = document.getElementById('testiCarousel');
+  const dotsWrap = document.getElementById('testiDots');
+  let cur = 0;
+  function slides()  { return document.querySelectorAll('.testi-slide'); }
+  function perView() { return window.innerWidth>=860 ? 2 : 1; }
+  function maxIdx()  { return Math.ceil(slides().length/perView())-1; }
+
+  function buildDots() {
+    dotsWrap.innerHTML='';
+    for(let i=0;i<=maxIdx();i++) {
+      const d=document.createElement('button');
+      d.className='testi-dot'+(i===cur?' active':'');
+      d.addEventListener('click',()=>goTo(i));
+      dotsWrap.appendChild(d);
+    }
+  }
+  function goTo(n) {
+    cur=Math.max(0,Math.min(n,maxIdx()));
+    carousel.style.transform=`translateX(-${cur*100}%)`;
+    dotsWrap.querySelectorAll('.testi-dot').forEach((d,i)=>d.classList.toggle('active',i===cur));
+  }
+  document.getElementById('tPrev').addEventListener('click',()=>goTo(cur-1));
+  document.getElementById('tNext').addEventListener('click',()=>goTo(cur+1));
+  window.addEventListener('resize',()=>{ buildDots(); goTo(Math.min(cur,maxIdx())); });
+
+  let tsX=0;
+  carousel.addEventListener('touchstart',e=>{tsX=e.touches[0].clientX;},{passive:true});
+  carousel.addEventListener('touchend',  e=>{ if(Math.abs(tsX-e.changedTouches[0].clientX)>50) goTo(cur+(tsX-e.changedTouches[0].clientX>0?1:-1)); });
+
+  buildDots();
+})();
+</script>
+</body>
+</html>
